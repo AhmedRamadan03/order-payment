@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "ahmedramadan/order-payment-api",
+    "name": "ahmedramadan/order-payment",
     "type": "project",
     "description": "Extendable Laravel order and payment management API",
     "keywords": [

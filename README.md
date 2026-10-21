@@ -8,8 +8,8 @@ Laravel 13 REST API for order management and simulated payments. It uses JWT aut
 - Required PHP extensions for Laravel and `php-open-source-saver/jwt-auth`, including `pdo_pgsql` for PostgreSQL or `pdo_mysql` for MySQL. The test suite uses in-memory SQLite and also needs `pdo_sqlite`.
 
 ```bash
-git clone https://github.com/AhmedRamadan03/order-payment-api.git
-cd order-payment-api
+git clone https://github.com/AhmedRamadan03/order-payment.git
+cd order-payment
 composer install
 cp .env.example .env
 php artisan key:generate
@@ -39,12 +39,12 @@ All API endpoints use a consistent response envelope with `success`, `type`, `me
 
 ```json
 {
-  "success": true,
-  "type": "success",
-  "message": "Orders retrieved successfully.",
-  "data": [],
-  "errors": {},
-  "code": null
+    "success": true,
+    "type": "success",
+    "message": "Orders retrieved successfully.",
+    "data": [],
+    "errors": {},
+    "code": null
 }
 ```
 
@@ -54,46 +54,48 @@ Warnings use `type: "warning"` (for example, a declined simulated payment whose 
 
 All endpoints except registration and login require `Authorization: Bearer <token>`.
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/auth/register` | Register |
-| POST | `/api/auth/login` | Login |
-| GET | `/api/auth/me` | Current user |
-| POST | `/api/auth/refresh` | Refresh JWT |
-| POST | `/api/auth/logout` | Invalidate JWT |
+| Method | Endpoint             | Description    |
+| ------ | -------------------- | -------------- |
+| POST   | `/api/auth/register` | Register       |
+| POST   | `/api/auth/login`    | Login          |
+| GET    | `/api/auth/me`       | Current user   |
+| POST   | `/api/auth/refresh`  | Refresh JWT    |
+| POST   | `/api/auth/logout`   | Invalidate JWT |
 
 Successful auth responses include `data.access_token`, `data.token_type`, and `data.expires_in`.
 
 ## Orders
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/orders?status=pending&per_page=15` | Paginated current user's orders; optional status filter |
-| POST | `/api/orders` | Create order and calculate total |
-| GET | `/api/orders/{id}` | Get order, items and payments |
-| PUT/PATCH | `/api/orders/{id}` | Update order items |
-| DELETE | `/api/orders/{id}` | Delete only if no payments exist |
-| PATCH | `/api/orders/{id}/status` | Set pending, confirmed, or cancelled |
+| Method    | Endpoint                                 | Description                                             |
+| --------- | ---------------------------------------- | ------------------------------------------------------- |
+| GET       | `/api/orders?status=pending&per_page=15` | Paginated current user's orders; optional status filter |
+| POST      | `/api/orders`                            | Create order and calculate total                        |
+| GET       | `/api/orders/{id}`                       | Get order, items and payments                           |
+| PUT/PATCH | `/api/orders/{id}`                       | Update order items                                      |
+| DELETE    | `/api/orders/{id}`                       | Delete only if no payments exist                        |
+| PATCH     | `/api/orders/{id}/status`                | Set pending, confirmed, or cancelled                    |
 
 Create request:
+
 ```json
 {
-  "items": [
-    {"product_name": "Keyboard", "quantity": 2, "price": "25.50"},
-    {"product_name": "Mouse", "quantity": 1, "price": "10.00"}
-  ]
+    "items": [
+        { "product_name": "Keyboard", "quantity": 2, "price": "25.50" },
+        { "product_name": "Mouse", "quantity": 1, "price": "10.00" }
+    ]
 }
 ```
+
 The API calculates totals server-side and ignores any client-supplied total. New orders start pending; confirm an order through the status endpoint before processing its payment. Orders are scoped to their owner. Orders with payment attempts cannot be edited or deleted. An order with a pending or successful payment must remain confirmed.
 
 ## Payments
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/orders/{id}/payments` | Process simulated payment |
-| GET | `/api/orders/{id}/payments` | Paginated payments for an order |
-| GET | `/api/payments?status=successful&per_page=15` | Paginated current user's payments |
-| GET | `/api/payments/{id}` | One payment belonging to current user |
+| Method | Endpoint                                      | Description                           |
+| ------ | --------------------------------------------- | ------------------------------------- |
+| POST   | `/api/orders/{id}/payments`                   | Process simulated payment             |
+| GET    | `/api/orders/{id}/payments`                   | Paginated payments for an order       |
+| GET    | `/api/payments?status=successful&per_page=15` | Paginated current user's payments     |
+| GET    | `/api/payments/{id}`                          | One payment belonging to current user |
 
 Request body: `{"method":"credit_card"}` or `{"method":"paypal"}`. Payments can only be processed for confirmed orders. The optional `simulate_failure: true` flag makes a gateway decline the simulated attempt; retry without the flag to simulate success. The gateways do not contact a real provider. Payment status is `pending`, `successful`, or `failed`; only one pending or successful payment is allowed per order, and a failed payment may be retried. If a gateway call throws or its outcome is unknown, the payment remains pending to prevent a duplicate attempt. This project does not implement payment reconciliation; that would be required when replacing the simulations with a real provider.
 
@@ -115,7 +117,7 @@ See [`docs/API.md`](docs/API.md) for request/response examples, common validatio
 
 ## Testing and Postman
 
-Run `php artisan test` and `vendor/bin/pint`. Feature tests cover authentication, validation, order totals and ownership, payment business rules, and simulated gateway outcomes. The tests use SQLite in memory, so PHP must have `pdo_sqlite` enabled. Import `postman/Order-Payment-API.postman_collection.json` into Postman. Set `base_url` and run Register or Login; the collection stores the returned bearer token automatically.
+Run `php artisan test` and `vendor/bin/pint`. Feature tests cover authentication, validation, order totals and ownership, payment business rules, and simulated gateway outcomes. The tests use SQLite in memory, so PHP must have `pdo_sqlite` enabled. Import `postman/order-payment.postman_collection.json` into Postman. Set `base_url` and run Register or Login; the collection stores the returned bearer token automatically.
 
 ## Assumptions
 
